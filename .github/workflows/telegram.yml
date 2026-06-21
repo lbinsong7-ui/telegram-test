@@ -1,0 +1,37 @@
+name: Telegram Notify
+
+on:
+  push:
+  pull_request:
+  issues:
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Telegram message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          SERVER_URL: ${{ github.server_url }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          SHORT_SHA="${SHA::7}"
+          TEXT="GitHub 通知
+          仓库: ${REPO}
+          事件: ${EVENT_NAME}
+          操作人: ${ACTOR}
+          分支: ${REF_NAME}
+          提交: ${SHORT_SHA}
+          链接: ${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}"
+
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}"
